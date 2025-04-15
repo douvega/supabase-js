@@ -2,6 +2,7 @@
 const { getSupabaseClient } = require('./supabase-client');
 const logger = require('../utils/logger');
 const { AppError } = require('../utils/error-handler');
+const { applyFilter } = require('../utils/filter-parser');
 
 /**
  * Generic data repository for Supabase tables
@@ -53,6 +54,50 @@ class DataRepository {
       return { data, count };
     } catch (error) {
       logger.error(`Error selecting from ${tableName}`, error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Select data with complex filtering
+   * @param {string} tableName - Table name
+   * @param {string|Array} columns - Columns to select
+   * @param {Object} filterObject - Complex filter object
+   * @param {Object} options - Additional options
+   * @returns {Promise<Object>} Query results
+   */
+  async selectWithFilter(tableName, columns = '*', filterObject = null, options = {}) {
+    try {
+      // Start query
+      let query = this.supabase.from(tableName).select(columns);
+      
+      // Apply complex filter if provided
+      if (filterObject) {
+        query = applyFilter(query, filterObject);
+      }
+      
+      // Apply pagination
+      if (options.page && options.pageSize) {
+        const from = (options.page - 1) * options.pageSize;
+        const to = from + options.pageSize - 1;
+        query = query.range(from, to);
+      }
+      
+      // Apply ordering
+      if (options.orderBy) {
+        query = query.order(options.orderBy, { 
+          ascending: options.ascending !== false 
+        });
+      }
+      
+      // Execute query
+      const { data, error, count } = await query;
+      
+      if (error) throw new AppError(error.message, 400, 'Database');
+      
+      return { data, count };
+    } catch (error) {
+      logger.error(`Error selecting from ${tableName} with complex filter`, error);
       throw error;
     }
   }
