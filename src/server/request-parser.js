@@ -45,7 +45,14 @@ function parseRequestBody(req) {
           const formData = {};
           
           for (const [key, value] of parsedData.entries()) {
-            formData[key] = value;
+            // Convert string "true"/"false" to booleans
+            if (value.toLowerCase() === 'true') {
+              formData[key] = true;
+            } else if (value.toLowerCase() === 'false') {
+              formData[key] = false;
+            } else {
+              formData[key] = value;
+            }
           }
           
           resolve(formData);
