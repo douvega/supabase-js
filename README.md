@@ -38,7 +38,6 @@ The application follows a modular architecture with clear separation of concerns
     error-handler.js     # Error management
     logger.js            # Logging
     filter-parser.js     # Complex query parsing
-  app.js             # Entry point
 ```
 
 ## API Endpoints
